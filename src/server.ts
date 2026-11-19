@@ -131,8 +131,49 @@ app.get('/api/v1/users/:id', async(req : Request, res: Response)=>{
 })
 
 
+app.put('/api/v1/users/:id', async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const { name, email, age, passward, is_active } = req.body;
+
+        const result = await pool.query(
+            `
+            UPDATE users
+            SET
+                name = COALESCE($1, name),
+                email = COALESCE($2, email),
+                passward = COALESCE($3, passward),
+                age = COALESCE($4, age),
+                is_active = COALESCE($5, is_active)
+                WHERE id = $6
+            RETURNING id, name, email, age, is_active
+            `,
+            [
+                name ?? null,
+                email ?? null,
+                passward ?? null,
+                age ?? null,
+                is_active ?? null,
+                id
+            ]
+        );
+         res.status(201).json({
+        success: true,
+        message: "Users Created!!!",
+        data: result.rows[0]
+    })
+       
+
+    } catch (error: any) {
+        res.status(500).json({
+            success: false,
+            message: error?.message,
+            error: error
+        });
+    }
+});
 
 
 app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`)
-})
+  console.log(`Example app listening on port ${port}`);
+});
